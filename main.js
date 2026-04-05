@@ -8,12 +8,22 @@ const fadeObserver = new IntersectionObserver(
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         entry.target.classList.add('visible');
+        fadeObserver.unobserve(entry.target);
       }
     });
   },
-  { threshold: 0.12 }
+  { threshold: 0.08 }
 );
-document.querySelectorAll('.fade-in').forEach((el) => fadeObserver.observe(el));
+
+document.querySelectorAll('.fade-in').forEach((el) => {
+  // Only animate elements that are NOT already in the viewport on load
+  const rect = el.getBoundingClientRect();
+  const inViewOnLoad = rect.top < window.innerHeight && rect.bottom > 0;
+  if (!inViewOnLoad) {
+    el.classList.add('will-animate');
+    fadeObserver.observe(el);
+  }
+});
 
 /* =========================================================
    Mobile Navigation Toggle
@@ -36,23 +46,33 @@ navLinks?.querySelectorAll('a').forEach((link) => {
 });
 
 /* =========================================================
-   Event Filter (Tabs)
+   Services Vertical Tabs
    ========================================================= */
-window.filterEvents = function filterEvents(type, btn) {
-  // Update active tab
-  document.querySelectorAll('.tab-btn').forEach((b) => {
-    b.classList.remove('active');
-    b.setAttribute('aria-selected', 'false');
+document.querySelectorAll('.service-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Remove active from all buttons
+    document.querySelectorAll('.service-tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+    
+    // Hide all panels
+    document.querySelectorAll('.service-panel').forEach(p => {
+      p.classList.remove('active');
+    });
+    
+    // Set clicked button strictly active
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    
+    // Show correct panel
+    const targetId = btn.getAttribute('data-target');
+    const targetPanel = document.getElementById(targetId);
+    if (targetPanel) {
+      targetPanel.classList.add('active');
+    }
   });
-  btn.classList.add('active');
-  btn.setAttribute('aria-selected', 'true');
-
-  // Show/hide cards
-  document.querySelectorAll('.event-card').forEach((card) => {
-    const match = type === 'all' || card.dataset.type === type;
-    card.style.display = match ? '' : 'none';
-  });
-};
+});
 
 /* =========================================================
    Contact Form — Basic Validation & Submission Handler
